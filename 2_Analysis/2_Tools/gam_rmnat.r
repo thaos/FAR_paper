@@ -101,6 +101,19 @@ get_ic_onperiod <- function(b_onperiod, method_name=NULL,  ci_p=0.95, ...){
   cbind(b_onperiod, ic)
 }
 
+plot_pannel_boot_time <- function(ic_df, param="FAR", main="FAR(t1)"){ 
+  env <- environment()
+  ic_subset <- ic_df[ic_df$param == param, ] %T>% print()
+  ic_subset %>% ggplot(.,  aes(x=time))+
+  ggtitle(main)+
+  geom_point(aes(x=time,  y=Estim,  group=method,  color=method), size=1)+
+  geom_line(aes(x=time,  y=Estim,  group=method,  color=method), size=1)+ 
+  geom_ribbon(aes(x=time,  ymin=IC_inf,  ymax=IC_sup,  group=method,  fill=method),  alpha=0.2)+ 
+  facet_grid(method~config, scales="free_y") +
+  # coord_cartesian( xlim = xlim, ylim = ylim)+
+  theme(legend.position = "bottom")
+}
+
 plot_boot_time <- function(ic_df, param="FAR", main="FAR(t1)"){ 
   env <- environment()
   ic_subset <- ic_df[ic_df$param == param, ] %T>% print()
@@ -138,6 +151,24 @@ plot_far <- function(ic_mat, axis_trans, main="", xlim, ylim, col=NULL){
                                 breaks = breaks,
                                 labels = trans_format(inv, function(x) format(rrtofar(x), digits=3)))
   ggplot_dual_axis(p1,p2)
+}
+
+plot_pannel_far <- function(ic_mat, axis_trans, main="", xlim, ylim, col=NULL){
+  ticks=c(0, 1/100, 1/10, 1/5, 1/3, 1/2, 1, 2, 3, 5, 10, 100, Inf)
+  if(missing(xlim)) xlim <- range(ic_mat$time)
+  if(missing(ylim)) ylim <- c(-1.1, 1.1)
+  inv <- get(paste(axis_trans, "_inv", sep=""))
+  trans <- get(paste(axis_trans, "_trans", sep=""))
+  breaks <- trans(ticks) 
+  param <- paste(axis_trans,"RR", sep="")
+  p1 <- plot_pannel_boot_time(ic_mat, param=param, main=main) +
+  scale_y_continuous(name = "Relative Risk",
+                     breaks = breaks,
+                     labels = trans_format(inv, function(x) format(x, digits=2)))+
+  coord_cartesian(xlim=xlim, ylim=ylim)
+  if (!is.null(col)) 
+    p1 <- p1 + scale_color_manual(values=col)
+  p1
 }
 
 al_trans <- function(x) atan(log(x))/(pi/2)

@@ -67,7 +67,7 @@ correct_anomalies_bias <- function(sample, period=c(1961, 1990), y_name, time_na
   sample
 }
 
-boot_gam_allnat <- function(l_samples, y, ant, nat, time, pre_ind=c(1850, 1879), fixed=FALSE, knots=NULL, reuse_ant_bias=FALSE, ...){
+boot_gam_allnat <- function(l_samples, y, ant, nat, time, pre_ind=c(1850, 1879), fixed=FALSE, knots=NULL, correct_ant_bias=TRUE, reuse_ant_bias=FALSE, ...){
   original_data <- l_samples[[1]]
   i_pre_ind <- (original_data[, time] >= pre_ind[1] & original_data[, time] <= pre_ind[2])
   ant_pre_ind <- original_data[i_pre_ind, ant]
@@ -75,6 +75,7 @@ boot_gam_allnat <- function(l_samples, y, ant, nat, time, pre_ind=c(1850, 1879),
   l_gam <- lapply(l_samples, function(data) gam_allnat(data[, y], data[, ant], data[, nat], data[, time], fixed=fixed, knots=knots))
   l_ant_bias <- unlist(lapply(l_gam, compute_ant_bias, ant_pre_ind=ant_pre_ind, bias_pre_ind=bias_pre_ind))
   if(reuse_ant_bias) l_ant_bias <- rep(l_ant_bias[1], length(l_ant_bias))
+  if(!correct_ant_bias) l_ant_bias <- numeric(length(l_ant_bias))
   l_gam_an  <- mapply(correct_ant_bias, gam_fit=l_gam, bias=l_ant_bias, SIMPLIFY=FALSE)
   l_gam_an_origin  <- mapply(correct_ant_bias, gam_fit=l_gam, bias=l_ant_bias, MoreArgs=list("newdata"=l_gam[[1]]$data), SIMPLIFY=FALSE)
   # print_bias <- function(original_data) print(with(subset(original_data, time >= pre_ind[1] & time <= pre_ind[2]), mean(gam_all - gam_nat)))
